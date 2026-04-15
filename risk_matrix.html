@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nine-Layer Risk Matrix — Aureus Macro</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #ffffff;
+    color: #1a1a1a;
+    padding: 32px 24px 48px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #0D2B45; }
+  .header-left { }
+  .report-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #2E7BA8; margin-bottom: 6px; }
+  .report-title { font-size: 18px; font-weight: 700; color: #0D2B45; line-height: 1.3; }
+  .report-sub { font-size: 12px; color: #888780; margin-top: 3px; }
+  .brand { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; color: #2E7BA8; text-align: right; }
+  .brand-sub { font-size: 9px; letter-spacing: 0.12em; color: #888780; text-align: right; margin-top: 1px; }
+
+  .legend { display: flex; gap: 20px; margin-bottom: 16px; flex-wrap: wrap; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #5F5E5A; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .main-grid { display: grid; grid-template-columns: 200px 1fr; gap: 20px; align-items: start; }
+
+  .risk-list { }
+  .cat-header { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 0 3px; border-bottom: 0.5px solid rgba(136,135,128,0.2); margin-bottom: 2px; }
+  .risk-row { display: flex; align-items: flex-start; gap: 8px; padding: 5px 4px; border-radius: 4px; cursor: pointer; transition: background 0.1s; }
+  .risk-row:hover, .risk-row.active { background: rgba(46,123,168,0.06); }
+  .risk-num { width: 20px; height: 20px; min-width: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; margin-top: 1px; }
+  .rn-c { background: rgba(201,150,58,0.15); border: 1.5px solid #C9963A; color: #C9963A; }
+  .rn-e { background: rgba(46,123,168,0.12); border: 1.5px solid #2E7BA8; color: #2E7BA8; }
+  .rn-l { background: transparent; border: 1.5px dashed #5F5E5A; color: #5F5E5A; }
+  .risk-text { }
+  .risk-name { font-size: 12px; color: #1a1a1a; line-height: 1.4; font-weight: 500; }
+  .risk-anchor { font-size: 10px; color: #888780; margin-top: 1px; line-height: 1.3; }
+
+  .chart-side { position: relative; display: flex; flex-direction: column; gap: 12px; }
+  .am-tt { position: absolute; background: #0D2B45; color: #B5D4F4; border: 0.5px solid #2E7BA8; border-radius: 6px; padding: 10px 13px; font-size: 12px; line-height: 1.5; pointer-events: none; opacity: 0; transition: opacity 0.15s; max-width: 240px; z-index: 10; }
+  canvas { width: 100%; display: block; cursor: crosshair; border-radius: 4px; }
+  .detail-panel { background: #f0f4f8; border-left: 3px solid #2E7BA8; border-radius: 0 4px 4px 0; padding: 12px 14px; min-height: 52px; font-size: 11px; color: #888780; line-height: 1.6; }
+
+  .source { font-size: 9px; color: #888780; margin-top: 10px; padding-top: 8px; border-top: 0.5px solid rgba(136,135,128,0.2); }
+  .footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #0D2B45; display: flex; justify-content: space-between; align-items: center; }
+  .footer-brand { font-size: 12px; font-weight: 600; letter-spacing: 0.1em; color: #2E7BA8; }
+  .footer-note { font-size: 10px; color: #888780; }
+
+  @media (max-width: 600px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .header { flex-direction: column; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="report-label">Funding Stress Regime — Q1 2026</div>
+    <div class="report-title">Nine-Layer Risk Matrix</div>
+    <div class="report-sub">JPMorgan Chase · Citigroup · Wells Fargo · Goldman Sachs</div>
+  </div>
+  <div>
+    <div class="brand">AUREUS MACRO</div>
+    <div class="brand-sub">April 2026 | Issue 1</div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="leg-item"><div class="leg-dot" style="background:#C9963A;"></div>Critical — active now</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#2E7BA8;"></div>Elevated — in motion</div>
+  <div class="leg-item"><div class="leg-dot" style="background:transparent;border:1.5px dashed #5F5E5A;width:10px;height:10px;border-radius:50%;"></div>Latent — data gap</div>
+  <div style="margin-left:auto;font-size:10px;color:#888780;">Click any node or row for detail</div>
+</div>
+
+<div class="main-grid">
+  <div class="risk-list">
+    <div class="cat-header" style="color:#C9963A;">Credit Risk</div>
+    <div class="risk-row" id="row-1" onclick="highlightRisk(1)">
+      <div class="risk-num rn-c">1</div>
+      <div class="risk-text"><div class="risk-name">Credit quality deterioration</div><div class="risk-anchor">JPM 3.47% / Citi 5.05% / WFC 4.21%</div></div>
+    </div>
+    <div class="risk-row" id="row-2" onclick="highlightRisk(2)">
+      <div class="risk-num rn-c">2</div>
+      <div class="risk-text"><div class="risk-name">Accounting defense failure</div><div class="risk-anchor">WFC $1.8B coverage gap</div></div>
+    </div>
+
+    <div class="cat-header" style="color:#2E7BA8;">Structural Risk</div>
+    <div class="risk-row" id="row-3" onclick="highlightRisk(3)">
+      <div class="risk-num rn-e">3</div>
+      <div class="risk-text"><div class="risk-name">CRE structural wound</div><div class="risk-anchor">Office 11.54% vs 2.86% blended</div></div>
+    </div>
+    <div class="risk-row" id="row-6" onclick="highlightRisk(6)">
+      <div class="risk-num rn-e">6</div>
+      <div class="risk-text"><div class="risk-name">Forward PE ceiling</div><div class="risk-anchor">20.4x vs 10-yr avg 18.9x</div></div>
+    </div>
+
+    <div class="cat-header" style="color:#2E7BA8;">Liquidity Risk</div>
+    <div class="risk-row" id="row-4" onclick="highlightRisk(4)">
+      <div class="risk-num rn-e">4</div>
+      <div class="risk-text"><div class="risk-name">Liquidity fracture</div><div class="risk-anchor">JPM small biz 0.935% of total</div></div>
+    </div>
+
+    <div class="cat-header" style="color:#2E7BA8;">Rate Risk</div>
+    <div class="risk-row" id="row-5" onclick="highlightRisk(5)">
+      <div class="risk-num rn-e">5</div>
+      <div class="risk-text"><div class="risk-name">Rate paradox</div><div class="risk-anchor">AI infra floors long-end rates</div></div>
+    </div>
+
+    <div class="cat-header" style="color:#5F5E5A;">Systemic / Latent</div>
+    <div class="risk-row" id="row-7" onclick="highlightRisk(7)">
+      <div class="risk-num rn-l">7</div>
+      <div class="risk-text"><div class="risk-name">AI capital cycle mismatch</div><div class="risk-anchor">18-36 month productivity lag</div></div>
+    </div>
+    <div class="risk-row" id="row-8" onclick="highlightRisk(8)">
+      <div class="risk-num rn-l">8</div>
+      <div class="risk-text"><div class="risk-name">Regional bank opacity</div><div class="risk-anchor">Complete data gap</div></div>
+    </div>
+    <div class="risk-row" id="row-9" onclick="highlightRisk(9)">
+      <div class="risk-num rn-l">9</div>
+      <div class="risk-text"><div class="risk-name">AI employment displacement</div><div class="risk-anchor">Citi $250K avg severance</div></div>
+    </div>
+
+    <div class="source">Source: JPM, Citi, WFC, GS Q1 2026 earnings supplements. Aureus Macro analysis.</div>
+  </div>
+
+  <div class="chart-side">
+    <div id="am-tt" class="am-tt"></div>
+    <canvas id="amMatrix" role="img" aria-label="Aureus Macro nine-layer Funding Stress Regime risk matrix Q1 2026."></canvas>
+    <div id="am-detail" class="detail-panel">Click or hover any node to see data anchor and trigger condition.</div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-brand">AUREUS MACRO</div>
+  <div class="footer-note">Institutional-grade macroeconomic analysis · aurelusmacro.substack.com</div>
+</div>
+
+<script>
+const risks = [
+  {id:1,prob:85,impact:72,tier:'Critical',color:'#C9963A',label:'Credit quality deterioration',category:'Credit',anchor:'JPM card NCO 3.47% (+33 bps QoQ). Citi PLCC 5.05%. WFC 4.21%. Cross-tier synchronization confirms systemic penetration, not isolated stress.',trigger:'Already in progress across all credit tiers'},
+  {id:2,prob:62,impact:90,tier:'Critical',color:'#C9963A',label:'Accounting defense failure',category:'Credit',anchor:'WFC allowance coverage 1.59% to 1.41% — $1.8B gap. JPM housing allowance cut $140M against rising card NCOs. Home price appreciation as load-bearing CECL assumption.',trigger:'Case-Shiller negative monthly print'},
+  {id:3,prob:70,impact:65,tier:'Elevated',color:'#2E7BA8',label:'CRE structural wound',category:'Structural',anchor:'WFC office non-accrual 11.54% masked by 2.86% blended average. Q1 NCOs $19M vs $158M prior quarter — deferral through modification, not resolution.',trigger:'LTV breach on loan modification expiry'},
+  {id:4,prob:68,impact:62,tier:'Elevated',color:'#2E7BA8',label:'Liquidity fracture',category:'Liquidity',anchor:'JPM small business credit 0.935% of total. Originations -10% YoY. GS prime brokerage +59%, JPM equities +57% — liquidity recycling at the top, not reaching the employment base.',trigger:'Regional bank deposit acceleration'},
+  {id:5,prob:72,impact:56,tier:'Elevated',color:'#2E7BA8',label:'Rate paradox',category:'Rate',anchor:'WFC utilities/power credit +27.3% YoY. AI infra demand floors long-end rates regardless of Fed direction. Market pricing 2-3 cuts; structure pricing 1 or fewer.',trigger:'Inflation re-acceleration above 3%'},
+  {id:6,prob:65,impact:60,tier:'Elevated',color:'#2E7BA8',label:'Forward PE ceiling',category:'Structural',anchor:'Forward PE 20.4x vs 10-yr avg 18.9x. FactSet Financials sector: Q2 5.6%, Q3 2.6%. EPS numerator and discount rate both under simultaneous pressure.',trigger:'EPS miss combined with rate hold'},
+  {id:7,prob:45,impact:82,tier:'Latent',color:'#5F5E5A',label:'AI capital cycle mismatch',category:'Systemic',anchor:'18-36 month lag between capital deployment and productivity realization. WFC data center/power credit +29% YoY — revenue not yet on borrowers\' income statements.',trigger:'AI productivity miss at 18-month mark'},
+  {id:8,prob:55,impact:78,tier:'Latent',color:'#5F5E5A',label:'Regional bank opacity',category:'Systemic',anchor:'Four major banks all report deposit growth. Source is regional bank outflows. CRE exposure, allowance coverage, small business credit at regional level — complete data gap.',trigger:'Regional bank Q1 earnings season'},
+  {id:9,prob:50,impact:52,tier:'Latent',color:'#5F5E5A',label:'AI employment displacement',category:'Systemic',anchor:'Citi $500M severance, 2,000 net reduction — $250K avg. AI raises productivity ceiling without broad hiring. Consumer income growth suppressed.',trigger:'Non-farm payrolls sustained softening'}
+];
+
+const canvas = document.getElementById('amMatrix');
+const detail = document.getElementById('am-detail');
+const tt = document.getElementById('am-tt');
+let active = null;
+const pad = {left:44,right:14,top:14,bottom:38};
+
+function setup() {
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth;
+  const H = Math.round(W * 0.75);
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return {ctx, W, H};
+}
+let S = setup();
+
+function X(p) { return pad.left + (p/100) * (S.W - pad.left - pad.right); }
+function Y(p) { return pad.top + (S.H - pad.top - pad.bottom) - (p/100) * (S.H - pad.top - pad.bottom); }
+
+function draw(hl) {
+  const {ctx, W, H} = S;
+  ctx.clearRect(0, 0, W, H);
+  const pW = W - pad.left - pad.right;
+  const pH = H - pad.top - pad.bottom;
+
+  [[0,50,50,100,0.03],[50,50,100,100,0.09],[0,0,50,50,0.01],[50,0,100,50,0.04]].forEach(([x1,y1,x2,y2,a]) => {
+    ctx.fillStyle = `rgba(201,150,58,${a})`;
+    ctx.fillRect(X(x1), Y(y2), X(x2)-X(x1), Y(y1)-Y(y2));
+  });
+
+  ctx.strokeStyle = 'rgba(136,135,128,0.1)'; ctx.lineWidth = 0.5;
+  [0,25,50,75,100].forEach(v => {
+    ctx.beginPath(); ctx.moveTo(X(v), pad.top); ctx.lineTo(X(v), pad.top+pH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad.left, Y(v)); ctx.lineTo(pad.left+pW, Y(v)); ctx.stroke();
+  });
+
+  ctx.strokeStyle = 'rgba(46,123,168,0.25)'; ctx.lineWidth = 0.8; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(X(50), pad.top); ctx.lineTo(X(50), pad.top+pH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.left, Y(50)); ctx.lineTo(pad.left+pW, Y(50)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle = 'rgba(46,123,168,0.3)'; ctx.lineWidth = 0.8;
+  ctx.strokeRect(pad.left, pad.top, pW, pH);
+
+  ctx.fillStyle = '#888780'; ctx.font = '9px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  [['Low',17],['Med',50],['High',83]].forEach(([t,v]) => ctx.fillText(t, X(v), pad.top+pH+5));
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  [['Low',17],['Med',50],['High',83]].forEach(([t,v]) => ctx.fillText(t, pad.left-4, Y(v)));
+
+  ctx.fillStyle = '#5F5E5A'; ctx.font = '9px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('Probability of trigger →', pad.left+pW/2, H-12);
+  ctx.save(); ctx.translate(10, pad.top+pH/2); ctx.rotate(-Math.PI/2);
+  ctx.textBaseline = 'middle'; ctx.fillText('↑ Impact magnitude', 0, 0); ctx.restore();
+
+  risks.forEach(r => {
+    const x = X(r.prob), y = Y(r.impact);
+    const isHl = hl === r.id;
+    const rad = isHl ? 19 : 15;
+    if (isHl) {
+      ctx.beginPath(); ctx.arc(x, y, rad+6, 0, Math.PI*2);
+      ctx.fillStyle = r.tier==='Critical'?'rgba(201,150,58,0.1)':r.tier==='Elevated'?'rgba(46,123,168,0.08)':'rgba(95,94,90,0.05)';
+      ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI*2);
+    ctx.fillStyle = r.tier==='Critical'?'rgba(201,150,58,0.16)':r.tier==='Elevated'?'rgba(46,123,168,0.12)':'rgba(95,94,90,0.05)';
+    ctx.fill();
+    ctx.strokeStyle = r.color; ctx.lineWidth = isHl ? 2.5 : 1.5;
+    if (r.tier === 'Latent') ctx.setLineDash([3,3]);
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = r.tier === 'Latent' ? '#888780' : r.color;
+    ctx.font = (isHl ? '600 11px' : '600 10px') + ' sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(r.id, x, y);
+  });
+}
+draw(null);
+
+function showDetail(r) {
+  const tc = r.tier==='Critical'?'#C9963A':r.tier==='Elevated'?'#2E7BA8':'#5F5E5A';
+  detail.innerHTML = '<div style="display:flex;gap:8px;align-items:flex-start;">' +
+    '<span style="background:'+tc+';color:#fff;border-radius:50%;width:20px;height:20px;min-width:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">'+r.id+'</span>' +
+    '<div><div style="font-size:12px;font-weight:600;color:#1a1a1a;margin-bottom:2px;">'+r.label+' <span style="font-weight:400;color:'+tc+';font-size:10px;">'+r.tier+'</span></div>' +
+    '<div style="font-size:11px;color:#444441;line-height:1.55;margin-bottom:3px;">'+r.anchor+'</div>' +
+    '<div style="font-size:10px;color:#2E7BA8;">Trigger: '+r.trigger+'</div></div></div>';
+  document.querySelectorAll('.risk-row').forEach(el => el.classList.remove('active'));
+  const row = document.getElementById('row-'+r.id);
+  if (row) row.classList.add('active');
+}
+
+function highlightRisk(id) {
+  active = id; draw(id);
+  const r = risks.find(x => x.id === id);
+  if (r) showDetail(r);
+}
+window.highlightRisk = highlightRisk;
+
+canvas.addEventListener('mousemove', function(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  let found = null;
+  risks.forEach(r => { const dx = mx-X(r.prob), dy = my-Y(r.impact); if (Math.sqrt(dx*dx+dy*dy) < 19) found = r; });
+  if (found) {
+    tt.style.opacity = '1';
+    tt.innerHTML = '<span style="color:#C9963A;font-size:10px;font-weight:600;">'+found.tier.toUpperCase()+' — '+found.category+'</span><br><span style="color:#fff;font-size:11px;">'+found.label+'</span>';
+    let tx = mx+16, ty = my-8;
+    if (tx+250 > S.W) tx = mx-256;
+    if (ty < 0) ty = 4;
+    tt.style.left = tx+'px'; tt.style.top = ty+'px';
+    draw(found.id); showDetail(found);
+  } else {
+    tt.style.opacity = '0';
+    if (!active) { draw(null); document.querySelectorAll('.risk-row').forEach(el => el.classList.remove('active')); }
+  }
+});
+
+canvas.addEventListener('click', function(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  let found = null;
+  risks.forEach(r => { const dx = mx-X(r.prob), dy = my-Y(r.impact); if (Math.sqrt(dx*dx+dy*dy) < 19) found = r; });
+  if (found) { active = found.id; draw(found.id); showDetail(found); }
+  else { active = null; draw(null); detail.innerHTML = 'Click or hover any node to see data anchor and trigger condition.'; document.querySelectorAll('.risk-row').forEach(el => el.classList.remove('active')); }
+});
+
+canvas.addEventListener('mouseleave', function() { tt.style.opacity = '0'; draw(active); });
+window.addEventListener('resize', function() { S = setup(); draw(active); });
+</script>
+</body>
+</html>
